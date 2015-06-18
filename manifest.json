@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Omnibox App Launcher",
+  "author": "Christopher Ciufo",
+  "version": "0.1",
+  "description": "Provides the ability to search and launch installed chrome apps from the Omnibox",
+  "permissions": [
+    "management"
+  ],
+  "omnibox": {
+    "keyword": "run"
+  },
+  "background": {
+    "persistent": false,
+    "scripts": [
+      "background.js"
+    ]
+  }
+}
