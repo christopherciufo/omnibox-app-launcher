@@ -13,7 +13,8 @@
   "background": {
     "persistent": false,
     "scripts": [
-      "background.js"
+      "background.js",
+      "libraries/fuse.min.js"
     ]
   }
 }
