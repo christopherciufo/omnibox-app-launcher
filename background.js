@@ -6,7 +6,6 @@
 (function () {
   'use strict';
 
-
   function escapeText(text) {
     return text
         .replace(/&/g, '&amp;')
@@ -19,6 +18,7 @@
   }
 
   var fuse;
+  var idStore = {};
   var currentContent = "";
   var previousText = "";
 
@@ -44,6 +44,7 @@
         description: "<dim>Launch</dim> " + generateDescription(results[0])
       };
       currentContent = results[0].name;
+      idStore[currentContent] = results[0].id;
       previousText = text;
 
       chrome.omnibox.setDefaultSuggestion(topSuggestion);
@@ -54,6 +55,7 @@
           content: results[i].name,
           description: generateDescription(results[i])
         });
+        idStore[results[i].name] = results[i].id;
       }
       suggest(suggestions);
     }
@@ -66,7 +68,7 @@
     } else {
       searchKey = text;
     }
-    alert(searchKey);
+    chrome.management.launchApp(idStore[searchKey]);
   }); 
 
 })();
