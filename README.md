@@ -1,9 +1,9 @@
 # Omnibox Launcher
-Omnibox Launcher is a chrome extension that allows you to search and launch any of your installed Google Chrome Apps or Extensions from the omnibox.
+Omnibox Launcher is a chrome extension that allows you to search and launch any of your installed Google Chrome Apps or chrome built in pages (`chrome://` pages) from the omnibox.
 
 It can be found in the Chrome Web Store [here](https://chrome.google.com/webstore/detail/omnibox-launcher/eafjaeainlaojdehnppfcahiojdgjoho)
 
-Typing "run" into the omnibox followed by the TAB/SPACE key will start the Omnibox Launcher. Entering text will filter through all your Apps and Extensions and selecting one will launch it.
+Typing "run" into the omnibox followed by the TAB/SPACE key will start the Omnibox Launcher. Entering text will filter through all your Apps and chrome pages and selecting one will launch it.
 
 This extension leverages the [Fuse.js](http://kiro.me/projects/fuse.html) fuzzy search JavaScript library created by Kiro Risk.
 
