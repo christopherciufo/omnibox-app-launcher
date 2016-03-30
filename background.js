@@ -4,71 +4,78 @@
 // [Created] 2015/06/18
 // ---------------------------------------------
 (function () {
-  'use strict';
+  "use strict";
 
-  function escapeText(text) {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-  }
-
-  function generateDescription (result) {
-    return escapeText(result.name) + (escapeText(result.description) ? " - <dim>" + escapeText(result.description) + "</dim>" : "");
-  }
+  var appTypes = ["hosted_app", "packaged_app", "legacy_packaged_app"];
+  var chromeUrls = [
+    { type: "built_in", name: "Apps", description: "chrome://apps" },
+    { type: "built_in", name: "Bookmarks", description: "chrome://bookmarks" },
+    { type: "built_in", name: "Downloads", description: "chrome://downloads" },
+    { type: "built_in", name: "Extensions", description: "chrome://extensions" },
+    { type: "built_in", name: "History", description: "chrome://history" },
+    { type: "built_in", name: "Settings", description: "chrome://settings" }
+  ];
 
   var fuse;
-  var idStore = {};
-  var currentContent = "";
+  var appList = {};
+  var previousContent = "";
   var previousText = "";
 
-  chrome.omnibox.onInputChanged.addListener(function (text, suggest) {
-    if (text.length) {
-      if (typeof fuse === 'undefined') {
-        chrome.management.getAll(function (searchList) {
-          fuse = new Fuse(searchList, {
-            keys:['name', 'description']
-          });
-          displaySuggestions(text, suggest);
-        });
-      } else {
-        displaySuggestions(text, suggest);
-      }
-    }
+  chrome.omnibox.onInputStarted.addListener(function () {
+    chrome.management.getAll(function (apps) {
+      apps = _.filter(apps, function(app) {
+        return app.enabled && _.includes(appTypes, app.type);
+      });
+      fuse = new Fuse(chromeUrls.concat(apps), { keys: ["name", "description"] });
+    });
   });
 
-  function displaySuggestions(text, suggest) {
-    var results = fuse.search(text);
-    if (results.length) {
-      var topSuggestion = {
-        description: "<dim>Launch</dim> " + generateDescription(results[0])
-      };
-      currentContent = results[0].name;
-      idStore[currentContent] = results[0].id;
-      previousText = text;
+  chrome.omnibox.onInputChanged.addListener(function (text, suggest) {
+    if (text.length == 0) return;
 
-      chrome.omnibox.setDefaultSuggestion(topSuggestion);
-      
+    var results = fuse.search(text);
+    if (results.length > 0) {
+      var topSuggestion = results[0];
+
+      previousText = text;
+      previousContent = topSuggestion.name;
+      appList[previousContent] = topSuggestion;
+
+      chrome.omnibox.setDefaultSuggestion({
+        description: "<dim>Launch</dim> " + generateDescription(topSuggestion)
+      });
+
       var suggestions = [];
-      for (var i = 1; i < Math.min(results.length, 5); i++) {
+      for (var i = 1; i < _.min([results.length, 5]); i++) {
         suggestions.push({
           content: results[i].name,
           description: generateDescription(results[i])
         });
-        idStore[results[i].name] = results[i].id;
+        appList[results[i].name] = results[i];
       }
       suggest(suggestions);
+    } else {
+      chrome.omnibox.setDefaultSuggestion({ description: "No matches" });
     }
-  }
+  });
 
   chrome.omnibox.onInputEntered.addListener(function (text, disposition) {
-    var searchKey;
-    if (text == previousText) {
-      searchKey = currentContent;
+    var searchKey = (text == previousText) ? previousContent : text;
+
+    var app = appList[searchKey];
+    if (app.type === "built_in") {
+      chrome.tabs.create({ url: app.description });
     } else {
-      searchKey = text;
+      chrome.management.launchApp(appList[searchKey].id);
     }
-    chrome.management.launchApp(idStore[searchKey]);
-  }); 
+  });
+
+  function generateDescription (app) {
+    var description = _.escape(app.name);
+    if (app.description.length > 0) {
+      description += " - <dim>" + _.escape(app.description) + "</dim>";
+    }
+    return description;
+  }
 
 })();
